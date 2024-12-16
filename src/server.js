@@ -30,7 +30,26 @@ app.use(express.static(path.join(__dirname, 'public')));
   // also remove the user from users array send updated users array about "updateUsers" to every socket
 
   // Listen for "chatMessage" for any message and send {username:msg.username,message:msg.message} about "message" to every socket
-
+io.on("connection", (socket) => {
+  console.log("Connected " + socket.id);
+  socket.on("userJoin", (username) => {
+    users.push({id: socket.id, username});
+    socket.broadcast.emit("message", {username:"Bot",message:`${username} has joined the chat`});
+    io.emit("updateUsers", users.map(user => user.username));
+  })
+  socket.on("chatMessage", (msg) => {
+    io.emit("message", { username: msg.username, message: msg.message });
+  });
+  socket.on("disconnect", () => {
+    const userIndex = users.findIndex(user => user.id === socket.id);
+    if (userIndex !== -1) {
+      const username = users[userIndex].username;
+      socket.broadcast.emit("message", { username: "Bot", message: `${username} has left the chat` })
+      users.splice(userIndex, 1);
+      io.emit("updateUsers", users.map(user => user.username));
+    }
+  });
+})
 
 let server = http.listen(port, () => console.log(`Server Running at port ${port}`));
 
