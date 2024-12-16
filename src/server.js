@@ -18,29 +18,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 /////////////////////// IMPLEMENT BELOW STEPS //////////////////////
 
 // Setup io to listen to new connection and then inside its callback implement
-
+io.on("connection", (socket) => {
+  console.log("Connected " + socket.id);
   // Send {username:"Bot", message:"Welcome to chatbox"} about "message" to current socket only
-
+  socket.emit("message", {username: "Bot", message: "Welcome to chatbox"})
   // Listen for "userJoin" from client to get new username, add him to users array as {id: socket.id, username: username},
   // send {username:"Bot",message:`${username} has joined the chat`} about "message" to everyone except current socket and
   // send updated users array about "updateUsers" to every socket
-
-  // Listen for "disconnect", find the username from users array matching socket.id and 
-  // send {username:"Bot",message:`${username} has left the chat`} about "message" to everyone except current socket
-  // also remove the user from users array send updated users array about "updateUsers" to every socket
-
-  // Listen for "chatMessage" for any message and send {username:msg.username,message:msg.message} about "message" to every socket
-io.on("connection", (socket) => {
-  console.log("Connected " + socket.id);
-  socket.emit("message", {username: "Bot", message: "Welcome to chatbox"})
   socket.on("userJoin", (username) => {
     users.push({id: socket.id, username});
     socket.broadcast.emit("message", {username:"Bot",message:`${username} has joined the chat`});
     io.emit("updateUsers", users.map(user => user.username));
   })
-  socket.on("chatMessage", (msg) => {
-    io.emit("message", { username: msg.username, message: msg.message });
-  });
+  // Listen for "disconnect", find the username from users array matching socket.id and 
+  // send {username:"Bot",message:`${username} has left the chat`} about "message" to everyone except current socket
+  // also remove the user from users array send updated users array about "updateUsers" to every socket
   socket.on("disconnect", () => {
     const userIndex = users.findIndex(user => user.id === socket.id);
     if (userIndex !== -1) {
@@ -49,6 +41,10 @@ io.on("connection", (socket) => {
       users.splice(userIndex, 1);
       io.emit("updateUsers", users.map(user => user.username));
     }
+  });
+  // Listen for "chatMessage" for any message and send {username:msg.username,message:msg.message} about "message" to every socket
+  socket.on("chatMessage", (msg) => {
+    io.emit("message", { username: msg.username, message: msg.message });
   });
 })
 
