@@ -32,6 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
   // Listen for "chatMessage" for any message and send {username:msg.username,message:msg.message} about "message" to every socket
 io.on("connection", (socket) => {
   console.log("Connected " + socket.id);
+  socket.emit("message", {username: "Bot", message: "Welcome to chatbox"})
   socket.on("userJoin", (username) => {
     users.push({id: socket.id, username});
     socket.broadcast.emit("message", {username:"Bot",message:`${username} has joined the chat`});
